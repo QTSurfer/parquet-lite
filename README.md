@@ -50,4 +50,4 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 ## Copyright
 
 - Original work: Copyright Strategic Blue Ltd — [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor)
-- OutputStream support and fork maintenance: Copyright Wualabs — [QTSurfer/parquet-floor](https://github.com/QTSurfer/parquet-floor)
+- OutputStream support and fork maintenance: Copyright Wualabs LTD — [Wualabs.com](https://wualabs.com)

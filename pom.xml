@@ -8,7 +8,7 @@
 
   <version>1.63</version>
 
-  <name>Wualabs Parquet Floor</name>
+  <name>QTSurfer Parquet Floor</name>
   <url>https://github.com/QTSurfer/parquet-floor</url>
   <description>A lightweight Java library that facilitates reading and writing Apache Parquet files without Hadoop dependencies. Fork of strategicblue/parquet-floor with OutputStream support.</description>
 
