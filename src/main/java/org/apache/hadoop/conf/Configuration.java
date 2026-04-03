@@ -21,4 +21,23 @@ public class Configuration {
     public String get(String x) {
         return null;
     }
+
+    public String get(String x, String defaultValue) {
+        return defaultValue;
+    }
+
+    public void set(String name, String value) {
+    }
+
+    public ClassLoader getClassLoader() {
+        return Thread.currentThread().getContextClassLoader();
+    }
+
+    public Class<?> getClassByNameOrNull(String name) {
+        try {
+            return Class.forName(name, true, getClassLoader());
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
 }

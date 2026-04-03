@@ -1,4 +1,4 @@
-package blue.strategic.parquet.io;
+package com.wualabs.qtsurfer.parquet.io;
 
 import java.io.IOException;
 import java.io.OutputStream;

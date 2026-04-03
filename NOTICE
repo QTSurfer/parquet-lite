@@ -1,0 +1,10 @@
+QTSurfer Parquet Lite
+Copyright 2024-2026 WuaLabs
+
+This product includes software originally developed by Strategic Blue Ltd.
+(https://github.com/strategicblue/parquet-floor), licensed under Apache 2.0.
+
+Changes from the original:
+- Added OutputStream support (StreamParquetOutput)
+- Added configurable compression codec (ZSTD, SNAPPY, LZ4, etc.)
+- Renamed package from blue.strategic.parquet to com.wualabs.qtsurfer.parquet

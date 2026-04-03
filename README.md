@@ -1,22 +1,79 @@
-# parquet-floor
+# parquet-lite
 
-[![](https://jitpack.io/v/qtsurfer/parquet-floor.svg)](https://jitpack.io/#qtsurfer/parquet-floor)
+Lightweight Java library for reading and writing Apache Parquet files without Hadoop dependencies.
 
-A lightweight Java library that facilitates reading and writing Apache Parquet files without Hadoop dependencies.
+Fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor).
 
-This is a fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor) with added `OutputStream` support for writing Parquet data to arbitrary output streams (e.g. S3, MinIO, network sockets).
+## Features
 
-## Changes from upstream
+- Read and write Parquet files with a simple API
+- No Hadoop dependency tree — minimal stubs included
+- Write to `File`, `OutputStream`, or any `OutputFile` implementation
+- Configurable compression codecs
 
-- `ParquetWriter.writeOutputStream(schema, outputStream, dehydrator)` — write Parquet to any `OutputStream`
-- `ParquetWriter.writeOutput(schema, outputFile, dehydrator)` — write Parquet to any `OutputFile` implementation
-- `StreamParquetOutput` — `OutputFile` adapter for `OutputStream`
-- `FileParquetOutput` — `OutputFile` adapter for `File` (extracted from inline anonymous class)
-- Rebased on upstream master (parquet 1.17.0)
+### Supported compression codecs
 
-## Maven coordinates
+| Codec | Status | Library |
+|-------|--------|---------|
+| UNCOMPRESSED | Supported | Built-in |
+| SNAPPY | Supported | xerial-snappy (no Hadoop) |
+| ZSTD | Supported | zstd-jni (no Hadoop) |
+| GZIP | Not supported | Requires hadoop-common |
+| LZ4 | Not supported | Requires hadoop-common |
 
-Add the JitPack repository:
+## Usage
+
+### Writing
+
+```java
+MessageType schema = new MessageType("ticker",
+    Types.required(PrimitiveTypeName.INT64).named("t"),
+    Types.required(PrimitiveTypeName.DOUBLE).named("cls"));
+
+Dehydrator<Tick> dehydrator = (tick, writer) -> {
+    writer.write("t", tick.timestamp());
+    writer.write("cls", tick.close());
+};
+
+// Default codec (SNAPPY)
+try (ParquetWriter<Tick> writer = ParquetWriter.writeFile(schema, file, dehydrator)) {
+    writer.write(tick);
+}
+
+// Explicit codec
+try (ParquetWriter<Tick> writer = ParquetWriter.writeFile(schema, file, dehydrator,
+        CompressionCodecName.ZSTD)) {
+    writer.write(tick);
+}
+
+// Write to OutputStream
+try (ParquetWriter<Tick> writer = ParquetWriter.writeOutputStream(schema, outputStream,
+        dehydrator, CompressionCodecName.ZSTD)) {
+    writer.write(tick);
+}
+```
+
+### Reading
+
+```java
+Hydrator<Map<String, Object>, Map<String, Object>> hydrator = new Hydrator<>() {
+    public Map<String, Object> start() { return new HashMap<>(); }
+    public Map<String, Object> add(Map<String, Object> target, String heading, Object value) {
+        target.put(heading, value);
+        return target;
+    }
+    public Map<String, Object> finish(Map<String, Object> target) { return target; }
+};
+
+try (Stream<Map<String, Object>> rows = ParquetReader.streamContent(file,
+        HydratorSupplier.constantly(hydrator))) {
+    rows.forEach(row -> System.out.println(row));
+}
+```
+
+## Dependency (JitPack)
+
+### Maven
 
 ```xml
 <repositories>
@@ -25,29 +82,33 @@ Add the JitPack repository:
         <url>https://jitpack.io</url>
     </repository>
 </repositories>
-```
 
-Then add the dependency:
-
-```xml
 <dependency>
     <groupId>com.github.qtsurfer</groupId>
-    <artifactId>parquet-floor</artifactId>
-    <version>1.63</version>
+    <artifactId>parquet-lite</artifactId>
+    <version>2.0.0</version>
 </dependency>
 ```
 
-## Mission
+### Gradle
 
-Reading Parquet files in Java ought to be easy, but you can't seem to avoid pulling in most of Hadoop as dependencies. There are quite a few people complaining about this (e.g. https://stackoverflow.com/questions/59939309/read-local-parquet-file-without-hadoop-path-api, https://stackoverflow.com/questions/29279865/parquet-without-hadoop and https://issues.apache.org/jira/browse/PARQUET-1126), but there are no simple solutions out there.
+```groovy
+repositories {
+    maven { url 'https://jitpack.io' }
+}
 
-This library is put together using the fewest possible dependencies. In order to avoid pulling in the Hadoop dependency tree, it deliberately re-implements certain classes in the `org.apache.hadoop` package. Code has been lifted from the Apache Hadoop project (particularly https://github.com/apache/hadoop/tree/trunk/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/fs).
+dependencies {
+    implementation 'com.github.qtsurfer:parquet-lite:2.0.0'
+}
+```
 
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
 
-## Copyright
+## Attribution
 
 - Original work: Copyright Strategic Blue Ltd — [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor)
-- OutputStream support and fork maintenance: Copyright Wualabs LTD — [Wualabs.com](https://wualabs.com)
+- Fork maintenance: Copyright WuaLabs — [wualabs.com](https://wualabs.com)
+
+See [NOTICE](NOTICE) for details.

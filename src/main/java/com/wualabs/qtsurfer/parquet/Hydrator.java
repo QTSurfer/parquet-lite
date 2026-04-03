@@ -1,4 +1,4 @@
-package blue.strategic.parquet;
+package com.wualabs.qtsurfer.parquet;
 
 /**
  * Creates and hydrates a rich domain object from a Parquet row.

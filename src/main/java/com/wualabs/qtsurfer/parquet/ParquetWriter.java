@@ -1,7 +1,7 @@
-package blue.strategic.parquet;
+package com.wualabs.qtsurfer.parquet;
 
-import blue.strategic.parquet.io.FileParquetOutput;
-import blue.strategic.parquet.io.StreamParquetOutput;
+import com.wualabs.qtsurfer.parquet.io.FileParquetOutput;
+import com.wualabs.qtsurfer.parquet.io.StreamParquetOutput;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.hadoop.api.WriteSupport;
@@ -24,22 +24,34 @@ public final class ParquetWriter<T> implements Closeable {
     private final org.apache.parquet.hadoop.ParquetWriter<T> writer;
     
     public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out, Dehydrator<T> dehydrator) throws IOException {
-        return writeOutput(schema, new StreamParquetOutput(out), dehydrator);
+        return writeOutput(schema, new StreamParquetOutput(out), dehydrator, CompressionCodecName.SNAPPY);
+    }
+
+    public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
+        return writeOutput(schema, new StreamParquetOutput(out), dehydrator, codec);
     }
 
     public static <T> ParquetWriter<T> writeFile(MessageType schema, File out, Dehydrator<T> dehydrator) throws IOException {
-        return writeOutput(schema, new FileParquetOutput(out), dehydrator);
+        return writeOutput(schema, new FileParquetOutput(out), dehydrator, CompressionCodecName.SNAPPY);
+    }
+
+    public static <T> ParquetWriter<T> writeFile(MessageType schema, File out, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
+        return writeOutput(schema, new FileParquetOutput(out), dehydrator, codec);
     }
 
     public static <T> ParquetWriter<T> writeOutput(MessageType schema, OutputFile file, Dehydrator<T> dehydrator) throws IOException {
-        return new ParquetWriter<>(file, schema, dehydrator);
+        return new ParquetWriter<>(file, schema, dehydrator, CompressionCodecName.SNAPPY);
     }
 
-    private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator) throws IOException {
+    public static <T> ParquetWriter<T> writeOutput(MessageType schema, OutputFile file, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
+        return new ParquetWriter<>(file, schema, dehydrator, codec);
+    }
+
+    private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
         this.writer = new Builder<T>(outputFile)
                 .withType(schema)
                 .withDehydrator(dehydrator)
-                .withCompressionCodec(CompressionCodecName.SNAPPY)
+                .withCompressionCodec(codec)
                 .withWriterVersion(ParquetProperties.WriterVersion.PARQUET_2_0)
                 .build();
     }
@@ -113,7 +125,7 @@ public final class ParquetWriter<T> implements Closeable {
 
         @Override
         public String getName() {
-            return "blue.strategic.parquet.ParquetWriter";
+            return "com.wualabs.qtsurfer.parquet.ParquetWriter";
         }
 
         private void writeField(String name, Object value) {

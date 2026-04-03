@@ -1,4 +1,4 @@
-package blue.strategic.parquet;
+package com.wualabs.qtsurfer.parquet;
 
 import org.apache.parquet.column.ColumnDescriptor;
 import org.apache.parquet.column.ColumnReadStore;
