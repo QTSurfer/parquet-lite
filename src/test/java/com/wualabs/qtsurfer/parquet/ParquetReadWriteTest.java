@@ -67,8 +67,8 @@ public class ParquetReadWriteTest {
         }
         
         try(ParquetWriter<Object[]> writer = ParquetWriter.writeOutputStream(schema, new FileOutputStream(parquet), dehydrator)) {
-            writer.write(new Object[]{1L, "hello1"});
-            writer.write(new Object[]{2L, "hello2"});
+            writer.write(new Object[]{1L, "hello1", "{\"height\": \"10\"}"});
+            writer.write(new Object[]{2L, "hello2", "{\"height\": \"12\"}"});
         }
 
         try (Stream<Map<String, Object>> s = ParquetReader.streamContent(parquet, HydratorSupplier.constantly(hydrator))) {

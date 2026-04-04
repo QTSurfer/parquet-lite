@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.parquet.io.DelegatingPositionOutputStream;
 
-
 /**
  * Default implementation of a <code>PositionOutputStream</code>
- * 
+ *
  * @author mrmx
  */
 public class PositionAwareOutputStream extends DelegatingPositionOutputStream {
@@ -42,5 +41,4 @@ public class PositionAwareOutputStream extends DelegatingPositionOutputStream {
     public long getPos() throws IOException {
         return position;
     }
-
 }

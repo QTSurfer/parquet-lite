@@ -22,12 +22,13 @@ import java.util.Collections;
 public final class ParquetWriter<T> implements Closeable {
 
     private final org.apache.parquet.hadoop.ParquetWriter<T> writer;
-    
+
     public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out, Dehydrator<T> dehydrator) throws IOException {
         return writeOutput(schema, new StreamParquetOutput(out), dehydrator, CompressionCodecName.SNAPPY);
     }
 
-    public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
+    public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out,
+            Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
         return writeOutput(schema, new StreamParquetOutput(out), dehydrator, codec);
     }
 
@@ -43,7 +44,8 @@ public final class ParquetWriter<T> implements Closeable {
         return new ParquetWriter<>(file, schema, dehydrator, CompressionCodecName.SNAPPY);
     }
 
-    public static <T> ParquetWriter<T> writeOutput(MessageType schema, OutputFile file, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
+    public static <T> ParquetWriter<T> writeOutput(MessageType schema, OutputFile file,
+            Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
         return new ParquetWriter<>(file, schema, dehydrator, codec);
     }
 

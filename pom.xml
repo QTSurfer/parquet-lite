@@ -13,9 +13,9 @@
   <description>Lightweight Parquet reader/writer without Hadoop. Supports OutputStream and configurable compression (ZSTD, SNAPPY, LZ4). Fork of strategicblue/parquet-floor.</description>
 
   <scm>
-    <connection>scm:git:git@github.com:QTSurfer/parquet-floor.git</connection>
-    <url>scm:git:git@github.com:QTSurfer/parquet-floor.git</url>
-    <developerConnection>scm:git:git@github.com:QTSurfer/parquet-floor.git</developerConnection>
+    <connection>scm:git:git@github.com:QTSurfer/parquet-lite.git</connection>
+    <url>scm:git:git@github.com:QTSurfer/parquet-lite.git</url>
+    <developerConnection>scm:git:git@github.com:QTSurfer/parquet-lite.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
