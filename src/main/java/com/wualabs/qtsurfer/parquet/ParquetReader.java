@@ -95,6 +95,7 @@ public final class ParquetReader<U, S> implements Spliterator<S>, Closeable {
             return new Hydrator<String[], String[]>() {
                 @Override
                 public String[] start() {
+                    pos.set(0);
                     return new String[columns.size()];
                 }
 
