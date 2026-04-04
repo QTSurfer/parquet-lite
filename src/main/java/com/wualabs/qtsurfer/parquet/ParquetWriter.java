@@ -17,7 +17,10 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.UUID;
 
 public final class ParquetWriter<T> implements Closeable {
 
@@ -136,21 +139,51 @@ public final class ParquetWriter<T> implements Closeable {
             recordConsumer.startField(name, fieldIndex);
 
             switch (type.getPrimitiveTypeName()) {
-            case INT32: recordConsumer.addInteger((int)value); break;
-            case INT64: recordConsumer.addLong((long)value); break;
-            case DOUBLE: recordConsumer.addDouble((double)value); break;
-            case BOOLEAN: recordConsumer.addBoolean((boolean)value); break;
-            case FLOAT: recordConsumer.addFloat((float)value); break;
+            case INT32: recordConsumer.addInteger((int) value); break;
+            case INT64: recordConsumer.addLong((long) value); break;
+            case DOUBLE: recordConsumer.addDouble((double) value); break;
+            case BOOLEAN: recordConsumer.addBoolean((boolean) value); break;
+            case FLOAT: recordConsumer.addFloat((float) value); break;
             case BINARY:
-                if (type.getLogicalTypeAnnotation() == LogicalTypeAnnotation.stringType()
-                    || type.getLogicalTypeAnnotation() == LogicalTypeAnnotation.jsonType()) {
-                    recordConsumer.addBinary(Binary.fromString((String)value));
+                LogicalTypeAnnotation binaryAnnotation = type.getLogicalTypeAnnotation();
+                if (binaryAnnotation == LogicalTypeAnnotation.stringType()
+                    || binaryAnnotation == LogicalTypeAnnotation.jsonType()
+                    || binaryAnnotation == LogicalTypeAnnotation.enumType()) {
+                    recordConsumer.addBinary(Binary.fromString((String) value));
                 } else {
-                    throw new UnsupportedOperationException("We don't support writing " + type.getLogicalTypeAnnotation());
+                    throw new UnsupportedOperationException(
+                            "Unsupported BINARY logical type: " + binaryAnnotation);
+                }
+                break;
+            case FIXED_LEN_BYTE_ARRAY:
+                LogicalTypeAnnotation fixedAnnotation = type.getLogicalTypeAnnotation();
+                if (fixedAnnotation instanceof LogicalTypeAnnotation.UUIDLogicalTypeAnnotation) {
+                    UUID uuid = (UUID) value;
+                    ByteBuffer buf = ByteBuffer.allocate(16);
+                    buf.putLong(uuid.getMostSignificantBits());
+                    buf.putLong(uuid.getLeastSignificantBits());
+                    recordConsumer.addBinary(Binary.fromConstantByteArray(buf.array()));
+                } else if (fixedAnnotation instanceof LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) {
+                    BigDecimal decimal = (BigDecimal) value;
+                    LogicalTypeAnnotation.DecimalLogicalTypeAnnotation decAnnotation =
+                            (LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) fixedAnnotation;
+                    BigDecimal scaled = decimal.setScale(decAnnotation.getScale());
+                    byte[] unscaled = scaled.unscaledValue().toByteArray();
+                    int len = type.getTypeLength();
+                    byte[] padded = new byte[len];
+                    if (scaled.signum() < 0) {
+                        java.util.Arrays.fill(padded, (byte) 0xFF);
+                    }
+                    System.arraycopy(unscaled, 0, padded, len - unscaled.length, unscaled.length);
+                    recordConsumer.addBinary(Binary.fromConstantByteArray(padded));
+                } else {
+                    throw new UnsupportedOperationException(
+                            "Unsupported FIXED_LEN_BYTE_ARRAY logical type: " + fixedAnnotation);
                 }
                 break;
             default:
-                throw new UnsupportedOperationException("We don't support writing " + type.getPrimitiveTypeName());
+                throw new UnsupportedOperationException(
+                        "Unsupported primitive type: " + type.getPrimitiveTypeName());
             }
             recordConsumer.endField(name, fieldIndex);
         }

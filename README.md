@@ -1,5 +1,9 @@
 # parquet-lite
 
+[![CI](https://github.com/QTSurfer/parquet-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/QTSurfer/parquet-lite/actions/workflows/ci.yml)
+[![JitPack](https://jitpack.io/v/QTSurfer/parquet-lite.svg)](https://jitpack.io/#QTSurfer/parquet-lite)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 Lightweight Java library for reading and writing Apache Parquet files without Hadoop dependencies.
 
 Fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor).
@@ -10,6 +14,22 @@ Fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-f
 - No Hadoop dependency tree — minimal stubs included
 - Write to `File`, `OutputStream`, or any `OutputFile` implementation
 - Configurable compression codecs
+
+### Supported types
+
+| Primitive | Logical Type | Java Type | Notes |
+|-----------|-------------|-----------|-------|
+| INT32 | — | `int` | |
+| INT64 | — | `long` | |
+| INT64 | TIMESTAMP(NANOS, UTC) | `long` | Nanos since epoch, compatible with QuestDB `now_ns()` |
+| FLOAT | — | `float` | |
+| DOUBLE | — | `double` | |
+| BOOLEAN | — | `boolean` | |
+| BINARY | STRING | `String` | |
+| BINARY | JSON | `String` | |
+| BINARY | ENUM | `String` | |
+| FIXED_LEN_BYTE_ARRAY(16) | UUID | `java.util.UUID` | |
+| FIXED_LEN_BYTE_ARRAY | DECIMAL | `java.math.BigDecimal` | Configurable precision/scale |
 
 ### Supported compression codecs
 
@@ -51,6 +71,28 @@ try (ParquetWriter<Tick> writer = ParquetWriter.writeOutputStream(schema, output
         dehydrator, CompressionCodecName.ZSTD)) {
     writer.write(tick);
 }
+```
+
+### Writing with extended types
+
+```java
+MessageType schema = new MessageType("trades",
+    Types.required(INT64)
+        .as(LogicalTypeAnnotation.timestampType(true, LogicalTypeAnnotation.TimeUnit.NANOS))
+        .named("ts_ns"),
+    Types.required(FIXED_LEN_BYTE_ARRAY).length(16)
+        .as(LogicalTypeAnnotation.uuidType()).named("trade_id"),
+    Types.required(FIXED_LEN_BYTE_ARRAY).length(16)
+        .as(LogicalTypeAnnotation.decimalType(2, 18)).named("price"),
+    Types.required(BINARY)
+        .as(LogicalTypeAnnotation.enumType()).named("exchange"));
+
+Dehydrator<Trade> dehydrator = (trade, writer) -> {
+    writer.write("ts_ns", trade.timestampNanos());
+    writer.write("trade_id", trade.id());        // UUID
+    writer.write("price", trade.price());         // BigDecimal
+    writer.write("exchange", trade.exchange());   // String
+};
 ```
 
 ### Reading

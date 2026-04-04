@@ -12,7 +12,9 @@ import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.DelegatingSeekableInputStream;
 import org.apache.parquet.io.InputFile;
 import org.apache.parquet.io.SeekableInputStream;
+import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.io.api.GroupConverter;
+import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
 
@@ -20,11 +22,15 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -146,9 +152,10 @@ public final class ParquetReader<U, S> implements Spliterator<S>, Closeable {
         if (columnReader.getCurrentDefinitionLevel() == maxDefinitionLevel) {
             switch (primitiveType.getPrimitiveTypeName()) {
             case BINARY:
-            case FIXED_LEN_BYTE_ARRAY:
             case INT96:
                 return primitiveType.stringifier().stringify(columnReader.getBinary());
+            case FIXED_LEN_BYTE_ARRAY:
+                return readFixedLenByteArray(primitiveType, columnReader);
             case BOOLEAN:
                 return columnReader.getBoolean();
             case DOUBLE:
@@ -165,6 +172,24 @@ public final class ParquetReader<U, S> implements Spliterator<S>, Closeable {
         } else {
             return null;
         }
+    }
+
+    private static Object readFixedLenByteArray(PrimitiveType type, ColumnReader columnReader) {
+        LogicalTypeAnnotation annotation = type.getLogicalTypeAnnotation();
+        Binary binary = columnReader.getBinary();
+
+        if (annotation instanceof LogicalTypeAnnotation.UUIDLogicalTypeAnnotation) {
+            ByteBuffer buf = ByteBuffer.wrap(binary.getBytes());
+            return new UUID(buf.getLong(), buf.getLong());
+        }
+
+        if (annotation instanceof LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) {
+            LogicalTypeAnnotation.DecimalLogicalTypeAnnotation dec =
+                    (LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) annotation;
+            return new BigDecimal(new BigInteger(binary.getBytes()), dec.getScale());
+        }
+
+        return type.stringifier().stringify(binary);
     }
 
     @Override
