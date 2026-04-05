@@ -151,6 +151,6 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 ## Attribution
 
 - Original work: Copyright Strategic Blue Ltd — [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-floor)
-- Fork maintenance: Copyright WuaLabs — [wualabs.com](https://wualabs.com)
+- Fork maintenance: Copyright Wualabs LTD — [wualabs.com](https://wualabs.com)
 
 See [NOTICE](NOTICE) for details.
