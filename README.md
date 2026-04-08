@@ -71,6 +71,14 @@ try (ParquetWriter<Tick> writer = ParquetWriter.writeOutputStream(schema, output
         dehydrator, CompressionCodecName.ZSTD)) {
     writer.write(tick);
 }
+
+// Write with custom compression level (e.g. ZSTD max)
+Configuration conf = new Configuration(false);
+conf.setInt("parquet.compression.codec.zstd.level", 22);
+try (ParquetWriter<Tick> writer = ParquetWriter.writeOutputStream(schema, outputStream,
+        dehydrator, CompressionCodecName.ZSTD, conf)) {
+    writer.write(tick);
+}
 ```
 
 ### Writing with extended types
@@ -128,7 +136,7 @@ try (Stream<Map<String, Object>> rows = ParquetReader.streamContent(file,
 <dependency>
     <groupId>com.github.qtsurfer</groupId>
     <artifactId>parquet-lite</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -140,7 +148,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.qtsurfer:parquet-lite:2.0.0'
+    implementation 'com.github.qtsurfer:parquet-lite:2.1.0'
 }
 ```
 

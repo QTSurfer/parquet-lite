@@ -35,6 +35,11 @@ public final class ParquetWriter<T> implements Closeable {
         return writeOutput(schema, new StreamParquetOutput(out), dehydrator, codec);
     }
 
+    public static <T> ParquetWriter<T> writeOutputStream(MessageType schema, OutputStream out,
+            Dehydrator<T> dehydrator, CompressionCodecName codec, Configuration conf) throws IOException {
+        return new ParquetWriter<>(new StreamParquetOutput(out), schema, dehydrator, codec, conf);
+    }
+
     public static <T> ParquetWriter<T> writeFile(MessageType schema, File out, Dehydrator<T> dehydrator) throws IOException {
         return writeOutput(schema, new FileParquetOutput(out), dehydrator, CompressionCodecName.SNAPPY);
     }
@@ -53,12 +58,19 @@ public final class ParquetWriter<T> implements Closeable {
     }
 
     private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator, CompressionCodecName codec) throws IOException {
-        this.writer = new Builder<T>(outputFile)
+        this(outputFile, schema, dehydrator, codec, null);
+    }
+
+    private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator, CompressionCodecName codec, Configuration conf) throws IOException {
+        var builder = new Builder<T>(outputFile)
                 .withType(schema)
                 .withDehydrator(dehydrator)
                 .withCompressionCodec(codec)
-                .withWriterVersion(ParquetProperties.WriterVersion.PARQUET_2_0)
-                .build();
+                .withWriterVersion(ParquetProperties.WriterVersion.PARQUET_2_0);
+        if (conf != null) {
+            builder.withConf(conf);
+        }
+        this.writer = builder.build();
     }
 
     public void write(T record) throws IOException {
