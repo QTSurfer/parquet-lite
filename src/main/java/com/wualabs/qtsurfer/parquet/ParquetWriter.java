@@ -61,7 +61,8 @@ public final class ParquetWriter<T> implements Closeable {
         this(outputFile, schema, dehydrator, codec, null);
     }
 
-    private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator, CompressionCodecName codec, Configuration conf) throws IOException {
+    private ParquetWriter(OutputFile outputFile, MessageType schema, Dehydrator<T> dehydrator,
+            CompressionCodecName codec, Configuration conf) throws IOException {
         var builder = new Builder<T>(outputFile)
                 .withType(schema)
                 .withDehydrator(dehydrator)
