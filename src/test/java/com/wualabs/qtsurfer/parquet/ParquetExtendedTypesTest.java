@@ -8,6 +8,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Month;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.*;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Types;
 import org.junit.Rule;
@@ -166,6 +170,74 @@ public class ParquetExtendedTypesTest {
             assertEquals(2, rows.size());
             assertEquals("BINANCE", rows.get(0).get("exchange"));
             assertEquals("BYBIT", rows.get(1).get("exchange"));
+        }
+    }
+
+    @Test
+    public void date_roundtrip() throws IOException {
+        LocalDate date1 = LocalDate.now();
+        LocalDate date2 = LocalDate.of(2026, Month.MAY, 10);
+
+        MessageType schema = new MessageType("test",
+                Types.required(INT32)
+                        .as(LogicalTypeAnnotation.dateType()).named("date"),
+                Types.required(INT64).named("ts"));
+
+        Dehydrator<Object[]> dehydrator = (record, writer) -> {
+            writer.write("date", record[0]);
+            writer.write("ts", record[1]);
+        };
+
+        File file = new File(folder.getRoot(), "date.parquet");
+        try (ParquetWriter<Object[]> writer = ParquetWriter.writeFile(schema, file, dehydrator)) {
+            writer.write(new Object[]{date1, 1000L});
+            writer.write(new Object[]{date2, 2000L});
+        }
+
+        try (Stream<Map<String, Object>> s =
+                     ParquetReader.streamContent(file, HydratorSupplier.constantly(HYDRATOR))) {
+            List<Map<String, Object>> rows = s.collect(Collectors.toList());
+            assertEquals(2, rows.size());
+            assertEquals(date1, rows.get(0).get("date"));
+            assertEquals(date2, rows.get(1).get("date"));
+            assertEquals(1000L, rows.get(0).get("ts"));
+        }
+    }
+
+    /**
+     * You can use a java.util.Date as input. However, the output will always be a LocalDate.
+     */
+    @Test
+    public void date2localDate() throws IOException {
+        Date date1 = new Date(1778371200000L);
+        Date date2 = new Date(1054166400000L);
+
+        LocalDate expectedDate1 = LocalDate.of(2026, Month.MAY, 10);
+        LocalDate expectedDate2 = LocalDate.of(2003, Month.MAY, 29);
+
+        MessageType schema = new MessageType("test",
+                Types.required(INT32)
+                        .as(LogicalTypeAnnotation.dateType()).named("date"),
+                Types.required(INT64).named("ts"));
+
+        Dehydrator<Object[]> dehydrator = (record, writer) -> {
+            writer.write("date", record[0]);
+            writer.write("ts", record[1]);
+        };
+
+        File file = new File(folder.getRoot(), "date.parquet");
+        try (ParquetWriter<Object[]> writer = ParquetWriter.writeFile(schema, file, dehydrator)) {
+            writer.write(new Object[]{date1, 1000L});
+            writer.write(new Object[]{date2, 2000L});
+        }
+
+        try (Stream<Map<String, Object>> s =
+                     ParquetReader.streamContent(file, HydratorSupplier.constantly(HYDRATOR))) {
+            List<Map<String, Object>> rows = s.collect(Collectors.toList());
+            assertEquals(2, rows.size());
+            assertEquals(expectedDate1, rows.get(0).get("date"));
+            assertEquals(expectedDate2, rows.get(1).get("date"));
+            assertEquals(1000L, rows.get(0).get("ts"));
         }
     }
 }

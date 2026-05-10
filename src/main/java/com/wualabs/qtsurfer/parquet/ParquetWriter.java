@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.UUID;
 
 public final class ParquetWriter<T> implements Closeable {
@@ -150,15 +152,31 @@ public final class ParquetWriter<T> implements Closeable {
             int fieldIndex = schema.getFieldIndex(name);
             PrimitiveType type = schema.getType(fieldIndex).asPrimitiveType();
             recordConsumer.startField(name, fieldIndex);
+            LogicalTypeAnnotation binaryAnnotation = type.getLogicalTypeAnnotation();
 
             switch (type.getPrimitiveTypeName()) {
-            case INT32: recordConsumer.addInteger((int) value); break;
+            case INT32:
+                if (binaryAnnotation == LogicalTypeAnnotation.dateType()) {
+                    if (value instanceof Date) {
+                        long unixTimestamp = ((Date) value).getTime();
+                        long daysSinceEpoch = unixTimestamp / 86400000L;
+                        recordConsumer.addInteger((int) daysSinceEpoch);
+                    } else if (value instanceof LocalDate) {
+                        long daysSinceEpoch = ((LocalDate) value).toEpochDay();
+                        recordConsumer.addInteger((int) daysSinceEpoch);
+                    }else {
+                        throw new UnsupportedOperationException(
+                                "Unsupported class for INT32 with logical type date");
+                    }
+                } else {
+                    recordConsumer.addInteger((int) value);
+                }
+                break;
             case INT64: recordConsumer.addLong((long) value); break;
             case DOUBLE: recordConsumer.addDouble((double) value); break;
             case BOOLEAN: recordConsumer.addBoolean((boolean) value); break;
             case FLOAT: recordConsumer.addFloat((float) value); break;
             case BINARY:
-                LogicalTypeAnnotation binaryAnnotation = type.getLogicalTypeAnnotation();
                 if (binaryAnnotation == LogicalTypeAnnotation.stringType()
                     || binaryAnnotation == LogicalTypeAnnotation.jsonType()
                     || binaryAnnotation == LogicalTypeAnnotation.enumType()) {
