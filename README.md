@@ -123,6 +123,10 @@ try (Stream<Map<String, Object>> rows = ParquetReader.streamContent(file,
 
 ## Dependency (JitPack)
 
+Replace `x.x.x` with the version you want — the latest release is shown by the
+JitPack badge at the top of this page (you can also use a tag, `master-SNAPSHOT`,
+or a commit hash).
+
 ### Maven
 
 ```xml
@@ -136,7 +140,7 @@ try (Stream<Map<String, Object>> rows = ParquetReader.streamContent(file,
 <dependency>
     <groupId>com.github.qtsurfer</groupId>
     <artifactId>parquet-lite</artifactId>
-    <version>2.1.0</version>
+    <version>x.x.x</version>
 </dependency>
 ```
 
@@ -148,7 +152,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.qtsurfer:parquet-lite:2.1.0'
+    implementation 'com.github.qtsurfer:parquet-lite:x.x.x'
 }
 ```
 
