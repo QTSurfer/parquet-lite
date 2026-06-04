@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.UUID;
@@ -158,13 +159,17 @@ public final class ParquetWriter<T> implements Closeable {
             case INT32:
                 if (binaryAnnotation == LogicalTypeAnnotation.dateType()) {
                     if (value instanceof Date) {
-                        long unixTimestamp = ((Date) value).getTime();
-                        long daysSinceEpoch = unixTimestamp / 86400000L;
+                        // Interpret the instant as a UTC calendar date so the conversion is correct
+                        // for non-midnight and pre-1970 dates (plain getTime()/86400000 truncates
+                        // toward zero, which is off by one for negative timestamps).
+                        long daysSinceEpoch =
+                            LocalDate.ofInstant(((Date) value).toInstant(), ZoneOffset.UTC)
+                                .toEpochDay();
                         recordConsumer.addInteger((int) daysSinceEpoch);
                     } else if (value instanceof LocalDate) {
                         long daysSinceEpoch = ((LocalDate) value).toEpochDay();
                         recordConsumer.addInteger((int) daysSinceEpoch);
-                    }else {
+                    } else {
                         throw new UnsupportedOperationException(
                                 "Unsupported class for INT32 with logical type date");
                     }

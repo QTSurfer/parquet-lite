@@ -240,4 +240,35 @@ public class ParquetExtendedTypesTest {
             assertEquals(1000L, rows.get(0).get("ts"));
         }
     }
+
+    @Test
+    public void date_before_epoch_roundtrip() throws IOException {
+        // 1969-12-31 12:00 UTC — a pre-epoch, non-midnight Date. The previous
+        // getTime()/86400000 truncated toward zero (-> 1970-01-01); the UTC-based
+        // conversion yields epoch day -1 (-> 1969-12-31).
+        Date date = new Date(-43_200_000L);
+        LocalDate expected = LocalDate.of(1969, Month.DECEMBER, 31);
+
+        MessageType schema = new MessageType("test",
+                Types.required(INT32)
+                        .as(LogicalTypeAnnotation.dateType()).named("date"),
+                Types.required(INT64).named("ts"));
+
+        Dehydrator<Object[]> dehydrator = (record, writer) -> {
+            writer.write("date", record[0]);
+            writer.write("ts", record[1]);
+        };
+
+        File file = new File(folder.getRoot(), "date_pre1970.parquet");
+        try (ParquetWriter<Object[]> writer = ParquetWriter.writeFile(schema, file, dehydrator)) {
+            writer.write(new Object[]{date, 1000L});
+        }
+
+        try (Stream<Map<String, Object>> s =
+                     ParquetReader.streamContent(file, HydratorSupplier.constantly(HYDRATOR))) {
+            List<Map<String, Object>> rows = s.collect(Collectors.toList());
+            assertEquals(1, rows.size());
+            assertEquals(expected, rows.get(0).get("date"));
+        }
+    }
 }
