@@ -19,7 +19,7 @@ Fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-f
 
 | Primitive | Logical Type | Java Type | Notes |
 |-----------|-------------|-----------|-------|
-| INT32 | — | `int` | |
+| INT32 | DATE | `int` | `java.time.LocalDate` | You can use `java.util.Date` as input. However, the output will always be a `LocalDate`.  |
 | INT64 | — | `long` | |
 | INT64 | TIMESTAMP(NANOS, UTC) | `long` | Nanos since epoch, compatible with QuestDB `now_ns()` |
 | FLOAT | — | `float` | |

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -164,7 +165,7 @@ public final class ParquetReader<U, S> implements Spliterator<S>, Closeable {
             case FLOAT:
                 return columnReader.getFloat();
             case INT32:
-                return columnReader.getInteger();
+                return readInt32(primitiveType, columnReader);
             case INT64:
                 return columnReader.getLong();
             default:
@@ -173,6 +174,17 @@ public final class ParquetReader<U, S> implements Spliterator<S>, Closeable {
         } else {
             return null;
         }
+    }
+
+    private static Object readInt32(PrimitiveType type, ColumnReader columnReader) {
+        LogicalTypeAnnotation annotation = type.getLogicalTypeAnnotation();
+        int intValue = columnReader.getInteger();
+
+        if (annotation instanceof LogicalTypeAnnotation.DateLogicalTypeAnnotation) {
+            return LocalDate.ofEpochDay(intValue);
+        }
+
+        return intValue;
     }
 
     private static Object readFixedLenByteArray(PrimitiveType type, ColumnReader columnReader) {
