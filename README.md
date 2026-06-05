@@ -19,7 +19,8 @@ Fork of [strategicblue/parquet-floor](https://github.com/strategicblue/parquet-f
 
 | Primitive | Logical Type | Java Type | Notes |
 |-----------|-------------|-----------|-------|
-| INT32 | DATE | `int` | `java.time.LocalDate` | You can use `java.util.Date` as input. However, the output will always be a `LocalDate`.  |
+| INT32 | — | `int` | |
+| INT32 | DATE | `java.time.LocalDate` | Accepts `java.util.Date` as input; the output is always a `LocalDate`. |
 | INT64 | — | `long` | |
 | INT64 | TIMESTAMP(NANOS, UTC) | `long` | Nanos since epoch, compatible with QuestDB `now_ns()` |
 | FLOAT | — | `float` | |
@@ -138,7 +139,7 @@ or a commit hash).
 </repositories>
 
 <dependency>
-    <groupId>com.github.qtsurfer</groupId>
+    <groupId>com.qtsurfer</groupId>
     <artifactId>parquet-lite</artifactId>
     <version>x.x.x</version>
 </dependency>
@@ -152,7 +153,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.qtsurfer:parquet-lite:x.x.x'
+    implementation 'com.qtsurfer:parquet-lite:x.x.x'
 }
 ```
 
